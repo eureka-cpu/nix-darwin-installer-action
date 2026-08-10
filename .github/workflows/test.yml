@@ -1,0 +1,92 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Primary path: flake-based config, Nix installed via cachix/install-nix-action.
+  flake:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Install nix-darwin (flake)
+        uses: ./
+        with:
+          flake: ./examples/flake#ci
+      - name: Verify activation
+        run: |
+          . /etc/bashrc || true
+          hello
+
+  # Same, but Nix installed via the Determinate installer — proves the action is
+  # installer-agnostic.
+  flake-determinate:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Install nix-darwin (flake)
+        uses: ./
+        with:
+          flake: ./examples/flake#ci
+      - name: Verify activation
+        run: |
+          . /etc/bashrc || true
+          hello
+
+  # No 'flake' or 'config-file' given: falls back to the action's bundled
+  # default configuration (modules/default.nix via the root flake.nix).
+  default-config:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Install nix-darwin (zero-config default)
+        id: activate
+        uses: ./
+      - name: Verify activation
+        run: |
+          test -n "${{ steps.activate.outputs.system }}"
+          readlink /run/current-system
+
+  # Channel-based config via configuration.nix.
+  channel:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Install nix-darwin (channel config-file)
+        uses: ./
+        with:
+          config-file: ./examples/channel/configuration.nix
+      - name: Verify activation
+        run: |
+          . /etc/bashrc || true
+          hello
+
+  # Lint the shell entrypoint on every change.
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck scripts/activate.sh

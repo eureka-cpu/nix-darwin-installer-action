@@ -1,0 +1,78 @@
+name: 'Install nix-darwin'
+description: 'Bootstrap and activate a nix-darwin configuration on a macOS runner.'
+author: 'CloudScythe Labs'
+
+branding:
+  icon: 'command'
+  color: 'blue'
+
+inputs:
+  flake:
+    description: >-
+      Flake reference to activate, e.g. '.#hostname' or '~/.config/nix-darwin#ci'.
+      Mutually exclusive with `config-file`. If neither is provided, the action
+      activates its own bundled default configuration (runner user,
+      aarch64-darwin, `nix.enable = false`; see `modules/default.nix`).
+    required: false
+    default: ''
+  config-file:
+    description: >-
+      Path to a configuration.nix for a channel-based install. Mutually exclusive
+      with `flake`. If neither is provided, the action activates its own bundled
+      default configuration (runner user, aarch64-darwin, `nix.enable = false`;
+      see `modules/default.nix`).
+    required: false
+    default: ''
+  command:
+    description: "darwin-rebuild subcommand to run (switch, build, check, activate)."
+    required: false
+    default: 'switch'
+  nix-darwin-ref:
+    description: >-
+      Flake reference used to obtain the `darwin-rebuild` binary for the initial
+      bootstrap (before nix-darwin is on PATH).
+    required: false
+    default: 'github:nix-darwin/nix-darwin'
+  nixpkgs-channel:
+    description: "nixpkgs channel to subscribe to for config-file installs."
+    required: false
+    default: 'nixpkgs-unstable'
+  nix-darwin-channel:
+    description: "nix-darwin channel tarball to subscribe to for config-file installs."
+    required: false
+    default: 'https://github.com/nix-darwin/nix-darwin/archive/master.tar.gz'
+  extra-args:
+    description: "Extra arguments appended to the darwin-rebuild invocation."
+    required: false
+    default: ''
+  github-token:
+    description: "Token used for github.com access-tokens to avoid API rate limits during evaluation."
+    required: false
+    default: ${{ github.token }}
+  use-sudo:
+    description: "Run darwin-rebuild with sudo (required to activate a system configuration)."
+    required: false
+    default: 'true'
+
+outputs:
+  system:
+    description: "Path of the activated system generation (/run/current-system)."
+    value: ${{ steps.activate.outputs.system }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Activate nix-darwin
+      id: activate
+      shell: bash
+      env:
+        INPUT_FLAKE: ${{ inputs.flake }}
+        INPUT_CONFIG_FILE: ${{ inputs.config-file }}
+        INPUT_COMMAND: ${{ inputs.command }}
+        INPUT_NIX_DARWIN_REF: ${{ inputs.nix-darwin-ref }}
+        INPUT_NIXPKGS_CHANNEL: ${{ inputs.nixpkgs-channel }}
+        INPUT_NIX_DARWIN_CHANNEL: ${{ inputs.nix-darwin-channel }}
+        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_USE_SUDO: ${{ inputs.use-sudo }}
+      run: '${{ github.action_path }}/scripts/activate.sh'
