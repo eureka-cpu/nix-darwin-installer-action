@@ -75,6 +75,24 @@ fi
 echo "Using nix: $NIX_BIN"
 "${SUDO[@]}" "$NIX_BIN" --version || true
 
+# --- back up pre-existing /etc files ----------------------------------------
+# nix-darwin refuses to overwrite an /etc file it manages unless its content
+# matches one of a hardcoded set of known hashes (installer/macOS version
+# combos it recognizes). That allowlist lags behind installer and macOS
+# updates, so a fresh runner's Nix installer step routinely produces content
+# nix-darwin doesn't recognize, aborting activation with "unexpected files in
+# /etc". On an ephemeral CI runner there's nothing in these files worth
+# preserving, so back them up the way nix-darwin's own error message suggests
+# before it gets a chance to complain.
+echo "::group::Backing up pre-existing /etc files nix-darwin doesn't recognize"
+for etcFile in /etc/nix/nix.conf /etc/bashrc /etc/zshrc /etc/zprofile /etc/zshenv; do
+  if [[ -f "$etcFile" && ! -L "$etcFile" ]]; then
+    echo "Backing up $etcFile -> $etcFile.before-nix-darwin"
+    "${SUDO[@]}" mv "$etcFile" "$etcFile.before-nix-darwin"
+  fi
+done
+echo "::endgroup::"
+
 # --- activate ------------------------------------------------------------------
 if [[ -n "$FLAKE" ]]; then
   echo "::group::Activating nix-darwin (flake: ${FLAKE}, command: ${COMMAND})"

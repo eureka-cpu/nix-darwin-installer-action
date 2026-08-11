@@ -13,7 +13,12 @@ the bootstrap steps. This action packages them.
 
 1. Obtains `darwin-rebuild` from a flake reference (it isn't on `PATH` before the
    first activation).
-2. Runs `darwin-rebuild switch` against either a **flake** or a **channel-based
+2. Backs up `/etc/nix/nix.conf`, `/etc/bashrc`, `/etc/zshrc`, `/etc/zprofile`, and
+   `/etc/zshenv` (as `<file>.before-nix-darwin`) if they exist and aren't already
+   managed by nix-darwin. nix-darwin refuses to overwrite these unless their
+   content matches one of its known installer hashes, which a fresh runner's Nix
+   install often won't. See [Notes for your nix-darwin config](#notes-for-your-nix-darwin-config).
+3. Runs `darwin-rebuild switch` against either a **flake** or a **channel-based
    `configuration.nix`**.
 
 Runs on `macos-*` runners only.
