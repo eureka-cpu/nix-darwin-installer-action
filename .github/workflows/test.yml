@@ -29,8 +29,8 @@ jobs:
           . /etc/bashrc || true
           hello
 
-  # Same, but Nix installed via the Determinate installer — proves the action is
-  # installer-agnostic.
+  # Same as above, but with Nix installed via the Determinate installer instead,
+  # to check the action isn't tied to one Nix installer.
   flake-determinate:
     runs-on: macos-latest
     timeout-minutes: 30
@@ -46,8 +46,8 @@ jobs:
           . /etc/bashrc || true
           hello
 
-  # No 'flake' or 'config-file' given: falls back to the action's bundled
-  # default configuration (modules/default.nix via the root flake.nix).
+  # No 'flake' or 'config-file' given, falls back to the action's bundled
+  # default configuration (modules/default.nix).
   default-config:
     runs-on: macos-latest
     timeout-minutes: 30
