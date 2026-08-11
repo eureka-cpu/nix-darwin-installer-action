@@ -1,0 +1,35 @@
+name: Release
+
+# Cut a release by tagging: git tag v1.2.3 && git push origin v1.2.3
+# Assumes the tagged commit already passed the Test workflow, this doesn't
+# re-run it.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+
+      # Consumers pin a floating major tag (e.g. @v1), move it to the release
+      # commit so they pick up new v1.x.y releases automatically.
+      - name: Move major version tag
+        run: |
+          major="${GITHUB_REF_NAME%%.*}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -fa "$major" -m "Update $major to $GITHUB_REF_NAME"
+          git push origin "$major" --force
