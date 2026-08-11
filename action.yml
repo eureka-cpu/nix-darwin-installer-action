@@ -12,7 +12,7 @@ inputs:
       Flake reference to activate, e.g. '.#hostname' or '~/.config/nix-darwin#ci'.
       Mutually exclusive with `config-file`. If neither is provided, the action
       activates its own bundled default configuration (runner user,
-      aarch64-darwin, Linux builder enabled; see `modules/default.nix`).
+      aarch64-darwin, Linux builder enabled, see `modules/default.nix`).
     required: false
     default: ''
   config-file:
@@ -20,7 +20,7 @@ inputs:
       Path to a configuration.nix for a channel-based install. Mutually exclusive
       with `flake`. If neither is provided, the action activates its own bundled
       default configuration (runner user, aarch64-darwin, Linux builder
-      enabled; see `modules/default.nix`).
+      enabled, see `modules/default.nix`).
     required: false
     default: ''
   command:

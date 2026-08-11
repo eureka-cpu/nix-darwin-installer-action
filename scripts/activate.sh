@@ -63,9 +63,10 @@ if [[ "$USE_SUDO" == "true" ]]; then
   SUDO=(sudo)
 fi
 
-# Options every nix invocation needs. Flakes may be enabled already, but we
-# don't assume it (e.g. when install-nix is false). Access tokens keep GitHub
-# fetches under the API rate limit.
+# Options for the `nix run ...#darwin-rebuild` bootstrap calls below. Flakes
+# are only needed to fetch darwin-rebuild itself here, so we pass the flag
+# ourselves rather than requiring the caller's Nix install to have it enabled.
+# Access tokens keep GitHub fetches under the API rate limit.
 NIX_OPTS=(--extra-experimental-features "nix-command flakes")
 if [[ -n "$GITHUB_TOKEN" ]]; then
   NIX_OPTS+=(--option access-tokens "github.com=${GITHUB_TOKEN}")
@@ -99,8 +100,8 @@ else
   echo "::endgroup::"
 
   echo "::group::Activating nix-darwin (config-file, command: ${COMMAND})"
-  # <darwin> resolves via the root 'darwin' channel added above; <darwin-config>
-  # points at the staged file.
+  # <darwin> resolves via the root 'darwin' channel added above.
+  # <darwin-config> points at the staged file.
   # shellcheck disable=SC2086
   "${SUDO[@]}" "$NIX_BIN" run "${NIX_DARWIN_REF}#darwin-rebuild" "${NIX_OPTS[@]}" -- \
     "$COMMAND" \

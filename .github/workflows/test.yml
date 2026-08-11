@@ -17,9 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
       - name: Install nix-darwin (flake)
         uses: ./
         with:
@@ -54,9 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
       - name: Install nix-darwin (zero-config default)
         id: activate
         uses: ./
@@ -72,9 +66,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
       - name: Install nix-darwin (channel config-file)
         uses: ./
         with:

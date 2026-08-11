@@ -18,12 +18,13 @@
     # Linux builder VM, so aarch64-linux/x86_64-linux derivations can build in
     # CI. Deliberately left at pkgs.darwin.linux-builder's own defaults
     # (1 core, 3 GB RAM, 20 GB disk) instead of sizing it up: GitHub's
-    # standard macOS runners only have 3 vCPUs, 14 GB RAM, and historically
-    # as little as ~14-18 GB free disk, so there isn't much room to spare.
-    # Raise cores/memorySize/diskSize via `linux-builder.config.virtualisation`
-    # if you're on a larger runner or self-hosted hardware. Also needs a
-    # runner with nested virtualization support, which GitHub's shared macOS
-    # runners may not provide.
+    # standard macOS runners only have 3 vCPUs and 14 GB RAM, and free disk
+    # space swings widely between image releases, including regressions to
+    # under 20 GB (see actions/runner-images#10511), so there isn't a stable
+    # baseline to size against. Raise cores/memorySize/diskSize via
+    # `linux-builder.config.virtualisation` if you're on a larger runner or
+    # self-hosted hardware. Also needs a runner with nested virtualization
+    # support, which GitHub's shared macOS runners may not provide.
     linux-builder = {
       enable = true;
       ephemeral = true;

@@ -23,16 +23,13 @@ Runs on `macos-*` runners only.
 **This action does not install Nix.** It requires `nix` to already be on `PATH`,
 installed by an earlier step. Bring whichever installer you prefer. That keeps
 its (many) configuration knobs on the installer action instead of duplicating
-them here. Flakes must be enabled; the action also passes
-`--extra-experimental-features "nix-command flakes"` as a safety net.
+them here. Flakes don't need to be enabled, but the action passes
+`--extra-experimental-features "nix-command flakes"` for bootstrapping nix-darwin.
 
 Any of these work:
 
 ```yaml
 - uses: cachix/install-nix-action@v31
-  with:
-    extra_nix_config: |
-      experimental-features = nix-command flakes
 # or
 - uses: DeterminateSystems/nix-installer-action@main
 ```
@@ -114,11 +111,14 @@ installer, so it layers its own settings on top instead of fighting them.
 
 This deliberately leaves the VM at `pkgs.darwin.linux-builder`'s own defaults
 (1 core, 3 GB RAM, 20 GB disk) rather than sizing it up. GitHub's standard
-macOS runners only have 3 vCPUs and 14 GB RAM, and historically as little as
-~14-18 GB free disk, so there isn't much room to spare. If you're on a larger
-runner or self-hosted hardware, raise `cores`/`memorySize`/`diskSize` under
+macOS runners only have 3 vCPUs and 14 GB RAM, and free disk space has been
+known to swing widely between image releases, including regressions down to
+under 20 GB (see [actions/runner-images#10511][disk-regression]), so there
+isn't a stable baseline to size against. Check `df -h` on the runner if
+you're unsure what you have. If you're on a larger runner or self-hosted
+hardware, raise `cores`/`memorySize`/`diskSize` under
 `nix.linux-builder.config.virtualisation` to match. Also check that the
-runner supports nested virtualization for the builder VM to boot at all;
+runner supports nested virtualization for the builder VM to boot at all,
 GitHub's shared macOS runners may not.
 
 ## Notes for your nix-darwin config
@@ -138,3 +138,4 @@ config.
 [cachix]: https://github.com/cachix/install-nix-action
 [determinate]: https://github.com/DeterminateSystems/nix-installer-action
 [linux-builder]: https://github.com/nix-darwin/nix-darwin/blob/master/modules/nix/linux-builder.nix
+[disk-regression]: https://github.com/actions/runner-images/issues/10511
