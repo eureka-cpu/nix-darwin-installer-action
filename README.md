@@ -88,18 +88,28 @@ jobs:
 ## Zero-config default
 
 If you provide neither `flake` nor `config-file`, the action activates its own
-[bundled default configuration](./modules/default.nix).
+bundled default configuration: `system.primaryUser = "runner"`,
+`nixpkgs.hostPlatform = "aarch64-darwin"`, `nix.enable = false`, and a pinned
+`system.stateVersion`. This is useful as a bare smoke test of the action
+itself, without writing any Nix. See
+[`modules/default.nix`](./modules/default.nix).
 
 ## Linux builder
 
-The main reason to run this action in CI is `pkgs.testers` now works on
-macOS, which means a NixOS VM test in your flake needs a
-[Linux builder][linux-builder] to evaluate on a Darwin runner. Without one,
-people typically gate those checks behind `lib.optionalAttrs (!stdenv.isDarwin)`
-or similar so `nix flake check` doesn't fail on macOS. This action lets you
-provision the builder in CI instead, so you accommodate the builder rather
-than accommodating your expression around its absence. The bundled default
-configuration enables it:
+nix-darwin can provision a [Linux builder][linux-builder] VM
+(`nix.linux-builder`), which is what lets `pkgs.testers`/NixOS VM tests
+evaluate on a Darwin host instead of being gated behind
+`lib.optionalAttrs (!stdenv.isDarwin)`. **This doesn't work on GitHub-hosted
+runners, shared or the paid larger tiers.** The builder boots its own VM via
+Apple's Virtualization framework, which is also what virtualizes the runner
+itself, and per [GitHub's own docs][github-hosted-runners], nested
+virtualization isn't supported there. It'll likely fail to start
+without erroring loudly, since the launchd job that boots it starts async in
+the background. It does work on a self-hosted runner on real Apple Silicon
+hardware you control, since nothing's nested there. Because of that, the
+bundled default configuration doesn't enable it.
+
+If you're on hardware where it applies, this is what enabling it looks like:
 
 ```nix
 nix = {
@@ -113,19 +123,11 @@ nix = {
 `nix.linux-builder.enable` requires `nix.enable`. nix-darwin recognizes
 `/etc/nix/nix.conf` written by cachix/install-nix-action, so it layers its
 own settings on top instead of fighting it. This does not work with the
-Determinate installer, see [Determinate Nix](#determinate-nix) below.
+Determinate installer either, see [Determinate Nix](#determinate-nix) below.
 
-This deliberately leaves the VM at `pkgs.darwin.linux-builder`'s own defaults
-(1 core, 3 GB RAM, 20 GB disk) rather than sizing it up. GitHub's standard
-macOS runners only have 3 vCPUs and 14 GB RAM, and free disk space has been
-known to swing widely between image releases, including regressions down to
-under 20 GB (see [actions/runner-images#10511][disk-regression]), so there
-isn't a stable baseline to size against. Check `df -h` on the runner if
-you're unsure what you have. If you're on a larger runner or self-hosted
-hardware, raise `cores`/`memorySize`/`diskSize` under
-`nix.linux-builder.config.virtualisation` to match. Also check that the
-runner supports nested virtualization for the builder VM to boot at all,
-GitHub's shared macOS runners may not.
+This leaves the VM at `pkgs.darwin.linux-builder`'s own defaults (1 core,
+3 GB RAM, 20 GB disk), raise `cores`/`memorySize`/`diskSize` under
+`nix.linux-builder.config.virtualisation` to match your hardware.
 
 ## Determinate Nix
 
@@ -133,32 +135,34 @@ This repo doesn't test against, or specifically support, the Determinate
 installer. Per [Determinate's own docs][determinate-nix-darwin], nix-darwin
 doesn't work correctly under Determinate unless you import their nix-darwin
 module and configure nix-darwin through it, since Determinate's own daemon
-manages the Nix install and conflicts with nix-darwin doing the same. That's
-a different setup than the plain `nix.enable = true` pattern this repo's
-default configuration and examples use, and it's out of scope here, better
+manages the Nix install and conflicts with nix-darwin doing the same. That
+only matters if you set `nix.enable = true` yourself, e.g. for
+[Linux builder](#linux-builder) support. The bundled default configuration
+sets `nix.enable = false` and doesn't hit this. Either way, getting
+Determinate working correctly with nix-darwin is out of scope here, better
 left to Determinate's own docs than half-supported by this action.
 
 If you want to use the Determinate installer with nix-darwin, follow their
 docs exactly for your own flake or config-file. This action just activates
-whatever you give it. Either way, `nix.linux-builder` is unavailable under
-Determinate, since it requires `nix.enable`, which conflicts with
-Determinate's daemon.
+whatever you give it.
 
 ## Notes for your nix-darwin config
 
+Because Nix is managed by the installer, set `nix.enable = false;` so
+nix-darwin doesn't fight the daemon config, unless you need `nix.linux-builder`
+(see [Linux builder](#linux-builder) above), which requires the opposite.
 GitHub's Apple-Silicon runners use the `runner` user, so
 `system.primaryUser = "runner";` and `nixpkgs.hostPlatform = "aarch64-darwin";`.
 See [`examples/`](./examples) for minimal flake and channel-based configs that
 pass CI.
 
-These settings, plus the Linux builder config above, live in
-[`modules/default.nix`](./modules/default.nix), a plain nix-darwin module
-(not tied to a flake) that the examples above import directly. Copy or import
-it from a checkout of this repo if you want the same defaults in your own
-config.
+These settings live in [`modules/default.nix`](./modules/default.nix), a
+plain nix-darwin module (not tied to a flake) that the examples above import
+directly. Copy or import it from a checkout of this repo if you want the same
+defaults in your own config.
 
 [nix-darwin]: https://github.com/nix-darwin/nix-darwin
 [cachix]: https://github.com/cachix/install-nix-action
 [linux-builder]: https://github.com/nix-darwin/nix-darwin/blob/master/modules/nix/linux-builder.nix
-[disk-regression]: https://github.com/actions/runner-images/issues/10511
+[github-hosted-runners]: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
 [determinate-nix-darwin]: https://docs.determinate.systems/guides/nix-darwin/
