@@ -12,10 +12,8 @@
     #
     # This does NOT work with the Determinate installer: Determinate's own
     # daemon manages the Nix install, which conflicts with nix-darwin doing
-    # the same, so Determinate's own docs have you set nix.enable = false
-    # instead. That also rules out nix.linux-builder, since it requires
-    # nix.enable. See examples/flake/configuration-determinate.nix for a
-    # config that works there, without the Linux builder.
+    # the same. This repo doesn't support Determinate, see the README's
+    # "Determinate Nix" section for why and what to do instead.
     enable = true;
 
     # Necessary for using `linux-builder`.

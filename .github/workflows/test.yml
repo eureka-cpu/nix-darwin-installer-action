@@ -26,26 +26,6 @@ jobs:
           . /etc/bashrc || true
           hello
 
-  # Same as above, but with Nix installed via the Determinate installer instead,
-  # to check the action isn't tied to one Nix installer. Uses a separate
-  # darwinConfiguration without the Linux builder: Determinate's own daemon
-  # conflicts with nix-darwin managing the Nix install, which nix.linux-builder
-  # requires (see examples/flake/configuration-determinate.nix).
-  flake-determinate:
-    runs-on: macos-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-      - uses: DeterminateSystems/nix-installer-action@main
-      - name: Install nix-darwin (flake)
-        uses: ./
-        with:
-          flake: ./examples/flake#determinate
-      - name: Verify activation
-        run: |
-          . /etc/bashrc || true
-          hello
-
   # No 'flake' or 'config-file' given, falls back to the action's bundled
   # default configuration (modules/default.nix).
   default-config:

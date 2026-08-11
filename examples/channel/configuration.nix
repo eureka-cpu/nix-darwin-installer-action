@@ -7,9 +7,14 @@
 
   nix = {
     # nix.linux-builder.enable requires nix.enable. nix-darwin recognizes
-    # /etc/nix/nix.conf written by cachix/install-nix-action and the
-    # Determinate installer, so it layers its own settings on top instead of
+    # /etc/nix/nix.conf written by cachix/install-nix-action (or the plain
+    # upstream installer), so it layers its own settings on top instead of
     # fighting them.
+    #
+    # This does NOT work with the Determinate installer: Determinate's own
+    # daemon manages the Nix install, which conflicts with nix-darwin doing
+    # the same. This repo doesn't support Determinate, see the README's
+    # "Determinate Nix" section for why and what to do instead.
     enable = true;
 
     # Necessary for using `linux-builder`.

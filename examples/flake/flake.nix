@@ -13,12 +13,5 @@
       darwinConfigurations."cachix" = nix-darwin.lib.darwinSystem {
         modules = [ ./configuration.nix ];
       };
-
-      # Same idea, but without the Linux builder: Determinate's installer
-      # conflicts with nix-darwin managing the Nix install (see
-      # configuration-determinate.nix), so this exercises that path in CI.
-      darwinConfigurations."determinate" = nix-darwin.lib.darwinSystem {
-        modules = [ ./configuration-determinate.nix ];
-      };
     };
 }

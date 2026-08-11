@@ -4,10 +4,9 @@ A GitHub Action that **bootstraps and activates a [nix-darwin][nix-darwin]
 configuration on macOS runners**, so you can test your macOS system config in
 CI the same way you'd run `darwin-rebuild switch` locally.
 
-There are plenty of actions that install *Nix* ([cachix/install-nix-action][cachix],
-[DeterminateSystems/nix-installer-action][determinate]), but none that take the
-next step and activate *nix-darwin*. Every project doing this today hand-rolls
-the bootstrap steps. This action packages them.
+There are plenty of actions that install *Nix* (e.g. [cachix/install-nix-action][cachix]),
+but none that take the next step and activate *nix-darwin*. Every project
+doing this today hand-rolls the bootstrap steps. This action packages them.
 
 ## What it does
 
@@ -31,13 +30,14 @@ its (many) configuration knobs on the installer action instead of duplicating
 them here. Flakes don't need to be enabled, but the action passes
 `--extra-experimental-features "nix-command flakes"` for bootstrapping nix-darwin.
 
-Any of these work:
+For example:
 
 ```yaml
 - uses: cachix/install-nix-action@v31
-# or
-- uses: DeterminateSystems/nix-installer-action@main
 ```
+
+See [Determinate Nix](#determinate-nix) below if you're using
+DeterminateSystems/nix-installer-action instead.
 
 ## Usage
 
@@ -112,18 +112,8 @@ nix = {
 
 `nix.linux-builder.enable` requires `nix.enable`. nix-darwin recognizes
 `/etc/nix/nix.conf` written by cachix/install-nix-action, so it layers its
-own settings on top instead of fighting it.
-
-**This doesn't work with the Determinate installer.** Determinate's own
-daemon manages the Nix install, which conflicts with nix-darwin doing the
-same, so [Determinate's own docs][determinate-nix-darwin] have you set
-`nix.enable = false;` instead, ruling out `nix.linux-builder` along with it.
-If you're on Determinate, drop the Linux builder settings and set
-`nix.enable = false;` yourself, see
-[`examples/flake/configuration-determinate.nix`](./examples/flake/configuration-determinate.nix)
-for a config that passes CI without it. A manually configured remote builder
-(a real machine or VM registered in `nix.buildMachines`) still works there,
-since that's unrelated to who manages the daemon.
+own settings on top instead of fighting it. This does not work with the
+Determinate installer, see [Determinate Nix](#determinate-nix) below.
 
 This deliberately leaves the VM at `pkgs.darwin.linux-builder`'s own defaults
 (1 core, 3 GB RAM, 20 GB disk) rather than sizing it up. GitHub's standard
@@ -137,6 +127,23 @@ hardware, raise `cores`/`memorySize`/`diskSize` under
 runner supports nested virtualization for the builder VM to boot at all,
 GitHub's shared macOS runners may not.
 
+## Determinate Nix
+
+This repo doesn't test against, or specifically support, the Determinate
+installer. Per [Determinate's own docs][determinate-nix-darwin], nix-darwin
+doesn't work correctly under Determinate unless you import their nix-darwin
+module and configure nix-darwin through it, since Determinate's own daemon
+manages the Nix install and conflicts with nix-darwin doing the same. That's
+a different setup than the plain `nix.enable = true` pattern this repo's
+default configuration and examples use, and it's out of scope here, better
+left to Determinate's own docs than half-supported by this action.
+
+If you want to use the Determinate installer with nix-darwin, follow their
+docs exactly for your own flake or config-file. This action just activates
+whatever you give it. Either way, `nix.linux-builder` is unavailable under
+Determinate, since it requires `nix.enable`, which conflicts with
+Determinate's daemon.
+
 ## Notes for your nix-darwin config
 
 GitHub's Apple-Silicon runners use the `runner` user, so
@@ -146,15 +153,12 @@ pass CI.
 
 These settings, plus the Linux builder config above, live in
 [`modules/default.nix`](./modules/default.nix), a plain nix-darwin module
-(not tied to a flake) that `examples/flake` and `examples/channel` import
-directly. Copy or import it from a checkout of this repo if you want the same
-defaults in your own config. `examples/flake/configuration-determinate.nix`
-is the exception, it doesn't import `modules/default.nix` since the Linux
-builder doesn't work under Determinate (see above).
+(not tied to a flake) that the examples above import directly. Copy or import
+it from a checkout of this repo if you want the same defaults in your own
+config.
 
 [nix-darwin]: https://github.com/nix-darwin/nix-darwin
 [cachix]: https://github.com/cachix/install-nix-action
-[determinate]: https://github.com/DeterminateSystems/nix-installer-action
 [linux-builder]: https://github.com/nix-darwin/nix-darwin/blob/master/modules/nix/linux-builder.nix
 [disk-regression]: https://github.com/actions/runner-images/issues/10511
 [determinate-nix-darwin]: https://docs.determinate.systems/guides/nix-darwin/
