@@ -24,7 +24,7 @@ inputs:
     required: false
     default: ''
   command:
-    description: "darwin-rebuild subcommand to run (switch, build, check, activate)."
+    description: "darwin-rebuild subcommand to run (switch, build, check)."
     required: false
     default: 'switch'
   nix-darwin-ref:

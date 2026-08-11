@@ -71,7 +71,7 @@ jobs:
 | -------------------- | ---------------------------------------- | ----------- |
 | `flake`              | `''`                                     | Flake ref to activate, e.g. `.#hostname`. Mutually exclusive with `config-file`. |
 | `config-file`        | `''`                                     | Path to a channel-based `configuration.nix`. Mutually exclusive with `flake`. |
-| `command`            | `switch`                                 | `darwin-rebuild` subcommand: `switch`, `build`, `check`, `activate`. |
+| `command`            | `switch`                                 | `darwin-rebuild` subcommand: `switch`, `build`, or `check`. |
 | `nix-darwin-ref`     | `github:nix-darwin/nix-darwin`           | Flake ref used to fetch the `darwin-rebuild` bootstrap binary. |
 | `nixpkgs-channel`    | `nixpkgs-unstable`                       | nixpkgs channel for channel-based installs. |
 | `nix-darwin-channel` | `.../nix-darwin/archive/master.tar.gz`   | nix-darwin channel tarball for channel-based installs. |
